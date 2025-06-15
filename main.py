@@ -1,43 +1,31 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List
+from flask import Flask, jsonify
+from flask_cors import CORS
+import os
 
-app = FastAPI(title="Sample API")
-
-# Enable CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with your frontend domain
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Sample data model
-class Item(BaseModel):
-    id: int
-    name: str
-    description: str
+app = Flask(__name__)
+CORS(app)
 
 # Sample data
 items = [
-    Item(id=1, name="Item 1", description="This is item 1"),
-    Item(id=2, name="Item 2", description="This is item 2"),
-    Item(id=3, name="Item 3", description="This is item 3"),
+    {"id": 1, "name": "Item 1", "description": "This is item 1"},
+    {"id": 2, "name": "Item 2", "description": "This is item 2"},
+    {"id": 3, "name": "Item 3", "description": "This is item 3"},
 ]
 
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the API"}
+@app.route("/")
+def root():
+    return jsonify({"message": "Welcome to the API"})
 
-@app.get("/items", response_model=List[Item])
-async def get_items():
-    return items
+@app.route("/items")
+def get_items():
+    return jsonify(items)
 
-@app.get("/items/{item_id}", response_model=Item)
-async def get_item(item_id: int):
+@app.route("/items/<int:item_id>")
+def get_item(item_id):
     for item in items:
-        if item.id == item_id:
-            return item
-    return {"error": "Item not found"} 
+        if item["id"] == item_id:
+            return jsonify(item)
+    return jsonify({"error": "Item not found"}), 404
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080))) 
